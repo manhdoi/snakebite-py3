@@ -55,7 +55,6 @@ import re
 import sys
 import random
 
-
 log = logging.getLogger(__name__)
 
 
@@ -126,7 +125,7 @@ class Client(object):
         self.hdfs_namenode_principal = hdfs_namenode_principal
         self.service_stub_class = client_proto.ClientNamenodeProtocol_Stub
         self.service = RpcService(self.service_stub_class, self.port, self.host, hadoop_version,
-                                  effective_user,self.use_sasl, self.hdfs_namenode_principal,
+                                  effective_user, self.use_sasl, self.hdfs_namenode_principal,
                                   sock_connect_timeout, sock_request_timeout)
         self.use_trash = use_trash
         self.trash = self._join_user_path(".Trash")
@@ -419,13 +418,11 @@ class Client(object):
 
         dst = self._normalize_path(dst)
 
-
         request = client_proto.RenameRequestProto()
         request.src = path
         request.dst = dst
         response = self.service.rename(request)
         return {"path": path, "result": response.result}
-
 
     def rename2(self, path, dst, overwriteDest=False):
         ''' Rename (but don't move) path to a destination
@@ -463,10 +460,10 @@ class Client(object):
         if not isinstance(path, (str, unicode)):
             raise InvalidInputException("rename2: Path should be a string")
 
-        processor = lambda path, node, dst=dst, overwriteDest=overwriteDest: self._handle_rename2(path, node, dst, overwriteDest)
+        processor = lambda path, node, dst=dst, overwriteDest=overwriteDest: self._handle_rename2(path, node, dst,
+                                                                                                  overwriteDest)
         for item in self._find_items([path], processor, include_toplevel=True):
             return item
-
 
     def _handle_rename2(self, path, node, dst, overwriteDest):
         if not dst.startswith("/"):
@@ -484,7 +481,7 @@ class Client(object):
             self.service.rename2(request)
         except RequestError as ex:
             if ("FileAlreadyExistsException" in str(ex) or
-                "rename destination directory is not empty" in str(ex)):
+                    "rename destination directory is not empty" in str(ex)):
                 raise FileAlreadyExistsException(ex)
             else:
                 raise
@@ -626,8 +623,11 @@ class Client(object):
         if not blocksize:
             blocksize = defaults['blockSize']
 
-        processor = lambda path, node, replication=replication, blocksize=blocksize: self._handle_touchz(path, node, replication, blocksize)
-        for item in self._find_items(paths, processor, include_toplevel=True, check_nonexistence=True, include_children=False):
+        processor = lambda path, node, replication=replication, blocksize=blocksize: self._handle_touchz(path, node,
+                                                                                                         replication,
+                                                                                                         blocksize)
+        for item in self._find_items(paths, processor, include_toplevel=True, check_nonexistence=True,
+                                     include_children=False):
             if item:
                 yield item
 
@@ -732,7 +732,8 @@ class Client(object):
 
         dst = self._normalize_path(dst)
 
-        processor = lambda path, node, dst=dst, check_crc=check_crc: self._handle_copyToLocal(path, node, dst, check_crc)
+        processor = lambda path, node, dst=dst, check_crc=check_crc: self._handle_copyToLocal(path, node, dst,
+                                                                                              check_crc)
         for path in paths:
             self.base_source = None
             for item in self._find_items([path], processor, include_toplevel=True, recurse=True, include_children=True):
@@ -809,7 +810,8 @@ class Client(object):
 
         processor = lambda path, node, dst=dst, check_crc=check_crc: self._handle_getmerge(path, node, dst, check_crc)
         try:
-            for item in self._find_items([path], processor, include_toplevel=True, recurse=False, include_children=True):
+            for item in self._find_items([path], processor, include_toplevel=True, recurse=False,
+                                         include_children=True):
                 for load in item:
                     if load['result']:
                         f.write(load['response'])
@@ -896,7 +898,7 @@ class Client(object):
         :type append: bool
         :returns: a generator that yields strings
         '''
-        #TODO: Make tail support multiple files at a time, like most other methods do
+        # TODO: Make tail support multiple files at a time, like most other methods do
 
         if not path:
             raise InvalidInputException("tail: no path given")
@@ -920,7 +922,7 @@ class Client(object):
             data += load
         # We read only the necessary packets but still
         # need to cut off at the packet level.
-        return data[max(0, len(data)-tail_length):len(data)]
+        return data[max(0, len(data) - tail_length):len(data)]
 
     def test(self, path, exists=False, directory=False, zero_length=False):
         '''Test if a path exist, is a directory or has zero length
@@ -942,7 +944,8 @@ class Client(object):
         if not path:
             raise InvalidInputException("test: no path given")
 
-        processor = lambda path, node, exists=exists, directory=directory, zero_length=zero_length: self._handle_test(path, node, exists, directory, zero_length)
+        processor = lambda path, node, exists=exists, directory=directory, zero_length=zero_length: self._handle_test(
+            path, node, exists, directory, zero_length)
         try:
             items = list(self._find_items([path], processor, include_toplevel=True))
             if len(items) == 0:
@@ -988,7 +991,7 @@ class Client(object):
 
         extension = os.path.splitext(path)[1]
         if extension == '.gz':
-            return zlib.decompress(text, 16+zlib.MAX_WBITS)
+            return zlib.decompress(text, 16 + zlib.MAX_WBITS)
         elif extension == '.bz2':
             return bz2.decompress(text)
         else:
@@ -1052,9 +1055,10 @@ class Client(object):
             request = client_proto.GetServerDefaultsRequestProto()
             response = self.service.getServerDefaults(request).serverDefaults
             self._server_defaults = {'blockSize': response.blockSize, 'bytesPerChecksum': response.bytesPerChecksum,
-                'writePacketSize': response.writePacketSize, 'replication': response.replication,
-                'fileBufferSize': response.fileBufferSize, 'encryptDataTransfer': response.encryptDataTransfer,
-                'trashInterval': response.trashInterval, 'checksumType': response.checksumType}
+                                     'writePacketSize': response.writePacketSize, 'replication': response.replication,
+                                     'fileBufferSize': response.fileBufferSize,
+                                     'encryptDataTransfer': response.encryptDataTransfer,
+                                     'trashInterval': response.trashInterval, 'checksumType': response.checksumType}
 
         # return a copy, so if the user changes any values, they won't be saved in the client
         return self._server_defaults.copy()
@@ -1160,7 +1164,8 @@ class Client(object):
                 data_xciever = DataXceiverChannel(host, port)
                 if data_xciever.connect():
                     try:
-                        for load in data_xciever.readBlock(length, pool_id, block.b.blockId, block.b.generationStamp, offset_in_block, block_token, check_crc):
+                        for load in data_xciever.readBlock(length, pool_id, block.b.blockId, block.b.generationStamp,
+                                                           offset_in_block, block_token, check_crc):
                             offset_in_block += len(load)
                             total_bytes_read += len(load)
                             successful_read = True
@@ -1174,13 +1179,14 @@ class Client(object):
                     raise ConnectionFailureException(
                         u"Failure to connect to data node at ({}:{})".format(
                             host, port
-                            ))
+                        ))
                 if successful_read:
                     break
             if successful_read is False:
                 raise TransientException("Failure to read block %s" % block.b.blockId)
 
-    def _find_items(self, paths, processor, include_toplevel=False, include_children=False, recurse=False, check_nonexistence=False):
+    def _find_items(self, paths, processor, include_toplevel=False, include_children=False, recurse=False,
+                    check_nonexistence=False):
         ''' Request file info from the NameNode and call the processor on the node(s) returned
 
         :param paths:
@@ -1355,10 +1361,11 @@ class Client(object):
 
     def _remove_user_path(self, path):
         dir_to_remove = posixpath.join("/user", get_current_username())
-        return path.replace(dir_to_remove+'/', "", 1)
+        return path.replace(dir_to_remove + '/', "", 1)
 
     def _normalize_path(self, path):
         return posixpath.normpath(re.sub('/+', '/', path))
+
 
 class HAClient(Client):
     ''' Snakebite client with support for High Availability
@@ -1384,7 +1391,7 @@ class HAClient(Client):
     def _wrap_methods(cls):
         # Add HA support to all public Client methods, but only do this when we haven't done this before
         for name, meth in inspect.getmembers(cls, inspect.isfunction):
-            if not name.startswith("_"): # Only public methods
+            if not name.startswith("_"):  # Only public methods
                 if inspect.isgeneratorfunction(meth):
                     setattr(cls, name, cls._ha_gen_method(meth))
                 else:
@@ -1450,7 +1457,8 @@ class HAClient(Client):
         if (self.failovers == -1):
             return
         elif (self.failovers >= self.max_failovers):
-            msg = "Request tried and failed for all %d namenodes after %d failovers: " % (len(namenodes), self.failovers)
+            msg = "Request tried and failed for all %d namenodes after %d failovers: " % (
+                len(namenodes), self.failovers)
             for namenode in namenodes:
                 msg += "\n\t* %s:%d" % (namenode.host, namenode.port)
             msg += "\nLook into debug messages - add -D flag!"
@@ -1475,7 +1483,6 @@ class HAClient(Client):
                                                      self.sock_connect_timeout,
                                                      self.sock_request_timeout,
                                                      self.use_datanode_hostname)
-
 
     def __calculate_exponential_time(self, time, retries, cap):
         # Same calculation as the original Hadoop client but converted to seconds
@@ -1503,7 +1510,7 @@ class HAClient(Client):
     def __handle_request_error(self, exception):
         log.debug("Request failed with %s" % exception)
         if exception.args[0].startswith("org.apache.hadoop.ipc.StandbyException"):
-            next(self.namenode) # Failover and retry until self.max_failovers was reached
+            next(self.namenode)  # Failover and retry until self.max_failovers was reached
         elif exception.args[0].startswith("org.apache.hadoop.ipc.RetriableException") and self.__should_retry():
             return
         else:
@@ -1517,32 +1524,35 @@ class HAClient(Client):
         log.debug("Request failed with %s" % exception)
         if exception.errno in (errno.ECONNREFUSED, errno.EHOSTUNREACH):
             # if NN is down or machine is not available, pass it:
-            next(self.namenode) # Failover and retry until self.max_failovers was reached
+            next(self.namenode)  # Failover and retry until self.max_failovers was reached
         elif isinstance(exception, socket.timeout):
-            next(self.namenode) # Failover and retry until self.max_failovers was reached
+            next(self.namenode)  # Failover and retry until self.max_failovers was reached
         else:
             raise
 
     @staticmethod
     def _ha_return_method(func):
         ''' Method decorator for 'return type' methods '''
+
         def wrapped(self, *args, **kw):
             self._reset_retries()
-            while(True): # switch between all namenodes
+            while (True):  # switch between all namenodes
                 try:
                     return func(self, *args, **kw)
                 except RequestError as e:
                     self.__handle_request_error(e)
                 except socket.error as e:
                     self.__handle_socket_error(e)
+
         return wrapped
 
     @staticmethod
     def _ha_gen_method(func):
         ''' Method decorator for 'generator type' methods '''
+
         def wrapped(self, *args, **kw):
             self._reset_retries()
-            while(True): # switch between all namenodes
+            while (True):  # switch between all namenodes
                 try:
                     results = func(self, *args, **kw)
                     yield from results
@@ -1551,9 +1561,14 @@ class HAClient(Client):
                     self.__handle_request_error(e)
                 except socket.error as e:
                     self.__handle_socket_error(e)
+                except StopIteration as e:
+                    return e.value
+
         return wrapped
 
+
 HAClient._wrap_methods()
+
 
 class AutoConfigClient(HAClient):
     ''' A pure python HDFS client that support HA and is auto configured through the ``HADOOP_HOME`` environment variable.
@@ -1575,6 +1590,7 @@ class AutoConfigClient(HAClient):
         Different Hadoop distributions use different protocol versions. Snakebite defaults to 9, but this can be set by passing
         in the ``hadoop_version`` parameter to the constructor.
     '''
+
     def __init__(self, hadoop_version=Namenode.DEFAULT_VERSION, effective_user=None, use_sasl=False):
         '''
         :param hadoop_version: What hadoop protocol version should be used (default: 9)
@@ -1591,8 +1607,10 @@ class AutoConfigClient(HAClient):
             raise InvalidInputException("List of namenodes is empty - couldn't create the client")
 
         super(AutoConfigClient, self).__init__(nns, configs.get('use_trash', False), effective_user,
-                                               configs.get('use_sasl', False), configs.get('hdfs_namenode_principal', None),
+                                               configs.get('use_sasl', False),
+                                               configs.get('hdfs_namenode_principal', None),
                                                configs.get('failover_max_attempts'), configs.get('client_retries'),
-                                               configs.get('client_sleep_base_millis'), configs.get('client_sleep_max_millis'),
+                                               configs.get('client_sleep_base_millis'),
+                                               configs.get('client_sleep_max_millis'),
                                                10000, configs.get('socket_timeout_millis'),
                                                use_datanode_hostname=configs.get('use_datanode_hostname', False))
